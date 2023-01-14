@@ -1,14 +1,22 @@
 package com.act.it.agd.smartorder;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.act.it.agd.smartorder.Common.Common;
 import com.act.it.agd.smartorder.Database.Database;
 import com.act.it.agd.smartorder.Model.Order;
+import com.act.it.agd.smartorder.Model.Request;
 import com.act.it.agd.smartorder.ViewHolder.CartAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -25,7 +33,7 @@ public class Cart extends AppCompatActivity {
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
     FirebaseDatabase database;
-    DatabaseReference request;
+    DatabaseReference requests;
     TextView txtTotalPrice;
     FButton btnPlace;
     List<Order> cart = new ArrayList<>();
@@ -34,20 +42,72 @@ public class Cart extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_cart);
+        setContentView(R.layout.activity_cart);
 
         //Firebase
         database = FirebaseDatabase.getInstance();
-        request = database.getReference("Requests");
+        requests = database.getReference("Requests");
         //Init
         recyclerView = (RecyclerView) findViewById(R.id.listCart);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         txtTotalPrice = (TextView) findViewById(R.id.total);
-//        btnPlace = (FButton) findViewById(R.id.btnPlaceOrder);
+        btnPlace = (FButton) findViewById(R.id.btnPlaceOrder);
 
+        btnPlace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showAlertDialog();
+            }
+        });
         loadListFood();
+    }
+
+    private void showAlertDialog() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(Cart.this);
+        alertDialog.setTitle("Thêm một bước nữa!!");
+        alertDialog.setMessage("Nhập địa chỉ của bạn: ");
+
+        final EditText edtAddress = new EditText(Cart.this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        );
+        edtAddress.setLayoutParams(lp);
+        alertDialog.setView(edtAddress);//Add edit Text to alert dialog
+        alertDialog.setIcon(R.drawable.ic_baseline_shopping_cart_24);
+
+        alertDialog.setPositiveButton("Xác nhận", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                //Create new Request
+                Request request = new Request(
+                        Common.currentUser.getPhone(),
+                        Common.currentUser.getName(),
+                        edtAddress.getText().toString(),
+                        txtTotalPrice.getText().toString(),
+                        cart
+                );
+
+                //Submit to Firebase
+                //We will using System.CurrentMili to key
+                requests.child(String.valueOf(System.currentTimeMillis()))
+                        .setValue(request);
+                //Delete cart
+                new Database(getBaseContext()).cleanCart();
+                Toast.makeText(Cart.this, "Cảm ơn bạn đã order", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        });
+
+        alertDialog.setNegativeButton("Hủy", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        alertDialog.show();
     }
 
     private void loadListFood() {

@@ -2,6 +2,7 @@ package com.act.it.agd.smartorder.ViewHolder;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.AnimatedImageDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,9 +63,10 @@ public class CartAdapter extends RecyclerView.Adapter<CartViewHolder> {
 
     @Override
     public void onBindViewHolder(CartViewHolder holder, int position) {
-//        TextDrawableHelper drawable = TextDrawableHelper.builder()
+//        TextDrawable drawable = TextDrawable.builder()
 //                .buildRound(""+listData.get(position).getQuantity(), Color.RED);
 //        holder.img_cart_count.setImageDrawable(drawable);
+
         Locale locale = new Locale("en", "US");
         NumberFormat fmt = NumberFormat.getCurrencyInstance(locale);
         int price = (Integer.parseInt(listData.get(position).getPrice()))*(Integer.parseInt(listData.get(position).getQuantity()));
